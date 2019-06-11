@@ -18,26 +18,26 @@ func TestDecode(t *testing.T) {
 			"name": "A Simple, non-specific object"
 		}`)
 
-		assert.Equal(t, "https://www.w3.org/ns/activitystreams", obj.String("@context"))
-		assert.Equal(t, obj.String("@context"), obj.Context())
+		assert.Equal(t, "https://www.w3.org/ns/activitystreams", obj.Str("@context"))
+		assert.Equal(t, obj.Str("@context"), obj.Context())
 
-		assert.Equal(t, "Object", obj.String("type"))
-		assert.Equal(t, obj.String("type"), obj.Type())
+		assert.Equal(t, "Object", obj.Str("type"))
+		assert.Equal(t, obj.Str("type"), obj.Type())
 
-		assert.Equal(t, "http://www.test.example/object/1", obj.String("id"))
-		assert.Equal(t, obj.String("id"), obj.ID())
+		assert.Equal(t, "http://www.test.example/object/1", obj.Str("id"))
+		assert.Equal(t, obj.Str("id"), obj.ID())
 
-		assert.Equal(t, "A Simple, non-specific object", obj.String("name"))
-		assert.Equal(t, obj.String("name"), obj.Name())
+		assert.Equal(t, "A Simple, non-specific object", obj.Str("name"))
+		assert.Equal(t, obj.Str("name"), obj.Name())
 	})
 
 	t.Run("object url", func(t *testing.T) {
 		assertLink := func(t *testing.T, link *apubencoding.Object, expHref, expMediaType string) {
 			require.NotNil(t, link)
-			assert.Equal(t, "Link", link.String("type"))
+			assert.Equal(t, "Link", link.Str("type"))
 			assert.Equal(t, "Link", link.Type())
-			assert.Equal(t, expHref, link.String("href"))
-			assert.Equal(t, expMediaType, link.String("mediaType"))
+			assert.Equal(t, expHref, link.Str("href"))
+			assert.Equal(t, expMediaType, link.Str("mediaType"))
 		}
 
 		pdfURL := "http://example.org/4q-sales-forecast.pdf"
@@ -54,7 +54,7 @@ func TestDecode(t *testing.T) {
 			links := obj.URLs()
 			require.Equal(t, 1, len(links))
 			assertLink(t, links[0], pdfURL, "")
-			assert.Equal(t, pdfURL, obj.String("url"))
+			assert.Equal(t, pdfURL, obj.Str("url"))
 		})
 
 		t.Run("subclass string", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestDecode(t *testing.T) {
 			links := obj.URLs()
 			require.Equal(t, 1, len(links))
 			assertLink(t, links[0], pdfURL, "")
-			assert.Equal(t, pdfURL, obj.String("url"))
+			assert.Equal(t, pdfURL, obj.Str("url"))
 		})
 
 		t.Run("subclass object", func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestDecode(t *testing.T) {
 			links := obj.URLs()
 			require.Equal(t, 1, len(links))
 			assertLink(t, links[0], pdfURL, pdfType)
-			assert.Equal(t, pdfURL, obj.String("url"))
+			assert.Equal(t, pdfURL, obj.Str("url"))
 		})
 	})
 }

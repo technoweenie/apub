@@ -13,26 +13,26 @@ type Object struct {
 }
 
 func (o *Object) Context() string {
-	return o.String("@context")
+	return o.Str("@context")
 }
 
 func (o *Object) ID() string {
-	return o.String("id")
+	return o.Str("id")
 }
 
 func (o *Object) Type() string {
-	return o.String("type")
+	return o.Str("type")
 }
 
 func (o *Object) Name() string {
-	return o.String("name")
+	return o.Str("name")
 }
 
 func (o *Object) URLs() []*Object {
 	return o.List("url")
 }
 
-func (o *Object) String(key string) string {
+func (o *Object) Str(key string) string {
 	ival, ok := o.data[key]
 	if !ok {
 		return ""
@@ -51,7 +51,7 @@ func (o *Object) String(key string) string {
 		if !ok {
 			return fmt.Sprintf("%v", val)
 		}
-		return o2.String(defkey)
+		return o2.Str(defkey)
 	default:
 		return fmt.Sprintf("%v", ival)
 	}
