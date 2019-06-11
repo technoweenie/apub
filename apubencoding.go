@@ -69,6 +69,11 @@ func (o *Object) Object(key string) *Object {
 	case string:
 		otype := o.Type()
 		ptypes, ok := propertyTypes[otype]
+		if !ok && otype == TypeObject {
+			return nil
+		}
+
+		ptypes, ok = propertyTypes[TypeObject]
 		if !ok {
 			return nil
 		}
@@ -92,8 +97,10 @@ func (o *Object) Object(key string) *Object {
 	}
 }
 
+const TypeObject = "Object"
+
 var propertyTypes = map[string]map[string]string{
-	"Object": map[string]string{
+	TypeObject: map[string]string{
 		"url": "Link",
 	},
 }
