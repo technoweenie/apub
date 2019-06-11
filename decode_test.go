@@ -31,61 +31,59 @@ func TestDecode(t *testing.T) {
 		assert.Equal(t, obj.String("name"), obj.Name())
 	})
 
-	t.Run("object url string", func(t *testing.T) {
-		obj := Decode(t, `{
-			"@context": "https://www.w3.org/ns/activitystreams",
-			"type": "Object",
-			"name": "4Q Sales Forecast",
-			"url": "http://example.org/4q-sales-forecast.pdf"
-		}`)
+	t.Run("object url", func(t *testing.T) {
+		assertLink := func(t *testing.T, link *apubencoding.Object, expHref, expMediaType string) {
+			require.NotNil(t, link)
+			assert.Equal(t, "Link", link.String("type"))
+			assert.Equal(t, "Link", link.Type())
+			assert.Equal(t, expHref, link.String("href"))
+			assert.Equal(t, expMediaType, link.String("mediaType"))
+		}
 
-		actualHref := obj.String("url")
-		assert.Equal(t, "http://example.org/4q-sales-forecast.pdf", actualHref)
-		link := obj.URL()
-		require.NotNil(t, link)
-		assert.Equal(t, "Link", link.String("type"))
-		assert.Equal(t, "Link", link.Type())
-		assert.Equal(t, actualHref, link.String("href"))
-		assert.Equal(t, "", link.String("mediaType"))
-	})
+		assertURL := func(t *testing.T, o *apubencoding.Object, expHref, expMediaType string) {
+			assert.Equal(t, expHref, o.String("url"))
+			assertLink(t, o.URL(), expHref, expMediaType)
+		}
 
-	t.Run("object subclass url string", func(t *testing.T) {
-		obj := Decode(t, `{
-			"@context": "https://www.w3.org/ns/activitystreams",
-			"type": "Document",
-			"name": "4Q Sales Forecast",
-			"url": "http://example.org/4q-sales-forecast.pdf"
-		}`)
+		pdfURL := "http://example.org/4q-sales-forecast.pdf"
+		pdfType := "application/pdf"
 
-		actualHref := obj.String("url")
-		assert.Equal(t, "http://example.org/4q-sales-forecast.pdf", actualHref)
-		link := obj.URL()
-		require.NotNil(t, link)
-		assert.Equal(t, "Link", link.String("type"))
-		assert.Equal(t, "Link", link.Type())
-		assert.Equal(t, actualHref, link.String("href"))
-		assert.Equal(t, "", link.String("mediaType"))
-	})
+		t.Run("string", func(t *testing.T) {
+			obj := Decode(t, `{
+				"@context": "https://www.w3.org/ns/activitystreams",
+				"type": "Object",
+				"name": "4Q Sales Forecast",
+				"url": "http://example.org/4q-sales-forecast.pdf"
+			}`)
 
-	t.Run("object subclass url object", func(t *testing.T) {
-		obj := Decode(t, `{
-			"@context": "https://www.w3.org/ns/activitystreams",
-			"type": "Document",
-			"name": "4Q Sales Forecast",
-			"url": {
-			"type": "Link",
-			"href": "http://example.org/4q-sales-forecast.pdf"
-			}
-		}`)
+			assertURL(t, obj, pdfURL, "")
+		})
 
-		actualHref := obj.String("url")
-		assert.Equal(t, "http://example.org/4q-sales-forecast.pdf", actualHref)
-		link := obj.URL()
-		require.NotNil(t, link)
-		assert.Equal(t, "Link", link.String("type"))
-		assert.Equal(t, "Link", link.Type())
-		assert.Equal(t, actualHref, link.String("href"))
-		assert.Equal(t, "", link.String("mediaType"))
+		t.Run("subclass string", func(t *testing.T) {
+			obj := Decode(t, `{
+				"@context": "https://www.w3.org/ns/activitystreams",
+				"type": "Document",
+				"name": "4Q Sales Forecast",
+				"url": "http://example.org/4q-sales-forecast.pdf"
+			}`)
+
+			assertURL(t, obj, pdfURL, "")
+		})
+
+		t.Run("subclass object", func(t *testing.T) {
+			obj := Decode(t, `{
+				"@context": "https://www.w3.org/ns/activitystreams",
+				"type": "Document",
+				"name": "4Q Sales Forecast",
+				"url": {
+					"type": "Link",
+					"href": "http://example.org/4q-sales-forecast.pdf",
+					"mediaType": "application/pdf"
+				}
+			}`)
+
+			assertURL(t, obj, pdfURL, pdfType)
+		})
 	})
 }
 
