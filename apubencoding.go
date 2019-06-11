@@ -33,63 +33,91 @@ func (o *Object) URLs() []*Object {
 }
 
 func (o *Object) Str(key string) string {
+	s, _ := o.Fetch(key)
+	return s
+}
+
+func (o *Object) Fetch(key string) (string, error) {
 	ival, ok := o.data[key]
 	if !ok {
-		return ""
+		return "", nil
 	}
 
 	switch val := ival.(type) {
 	case string:
-		return val
+		return val, nil
 	case int:
-		return strconv.Itoa(val)
+		return strconv.Itoa(val), nil
 	case int64:
-		return strconv.FormatInt(val, 10)
+		return strconv.FormatInt(val, 10), nil
 	case map[string]interface{}:
-		o2, _ := o.valueAsObject(key, ival)
-		return o2.DefaultValue()
-	case []interface{}:
-		objs, _ := o.valueAsList(key, val)
-		if len(objs) == 0 {
-			return ""
+		o2, err := o.valueAsObject(key, ival)
+		if err != nil {
+			return "", err
 		}
-		return objs[0].DefaultValue()
+		return o2.DefaultValue(), nil
+	case []interface{}:
+		objs, err := o.valueAsList(key, val)
+		if err != nil {
+			return "", err
+		}
+		if len(objs) == 0 {
+			return "", nil
+		}
+		return objs[0].DefaultValue(), nil
 	default:
-		return fmt.Sprintf("%v", ival)
+		return fmt.Sprintf("%v", ival), nil
 	}
 }
 
 func (o *Object) Object(key string) *Object {
-	ival, ok := o.data[key]
-	if !ok {
-		return nil
+	obj, _ := o.FetchObject(key)
+	if obj == nil {
+		return &Object{lang: o.lang, data: make(map[string]interface{})}
 	}
-
-	if list, ok := ival.([]interface{}); ok {
-		objs, _ := o.valueAsList(key, list)
-		if len(objs) == 0 {
-			return nil
-		}
-		return objs[0]
-	}
-
-	obj, _ := o.valueAsObject(key, ival)
 	return obj
 }
 
-func (o *Object) List(key string) []*Object {
+func (o *Object) FetchObject(key string) (*Object, error) {
 	ival, ok := o.data[key]
 	if !ok {
-		return nil
+		return nil, nil
 	}
 
 	if list, ok := ival.([]interface{}); ok {
-		objs, _ := o.valueAsList(key, list)
-		return objs
+		objs, err := o.valueAsList(key, list)
+		if err != nil {
+			return nil, err
+		}
+		if len(objs) == 0 {
+			return nil, nil
+		}
+		return objs[0], nil
 	}
 
-	obj, _ := o.valueAsObject(key, ival)
-	return []*Object{obj}
+	return o.valueAsObject(key, ival)
+}
+
+func (o *Object) List(key string) []*Object {
+	list, _ := o.FetchList(key)
+	return list
+}
+
+func (o *Object) FetchList(key string) ([]*Object, error) {
+	ival, ok := o.data[key]
+	if !ok {
+		return nil, nil
+	}
+
+	if list, ok := ival.([]interface{}); ok {
+		return o.valueAsList(key, list)
+	}
+
+	obj, err := o.valueAsObject(key, ival)
+	if obj == nil {
+		return nil, err
+	}
+	return []*Object{obj}, err
 }
 
 func (o *Object) valueAsObject(key string, ival interface{}) (*Object, error) {

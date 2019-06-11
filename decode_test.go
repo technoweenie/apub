@@ -29,6 +29,14 @@ func TestDecode(t *testing.T) {
 
 		assert.Equal(t, "A Simple, non-specific object", obj.Str("name"))
 		assert.Equal(t, obj.Str("name"), obj.Name())
+
+		assert.Equal(t, "", obj.Str("not-a-property"))
+		notObj := obj.Object("not-a-property")
+		require.NotNil(t, notObj)
+		assert.Equal(t, "", notObj.Context())
+		assert.Equal(t, "", notObj.Type())
+		notList := obj.List("not-a-list")
+		assert.Equal(t, 0, len(notList))
 	})
 
 	t.Run("object url", func(t *testing.T) {
