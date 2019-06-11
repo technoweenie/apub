@@ -88,6 +88,32 @@ func TestDecode(t *testing.T) {
 			assertLink(t, links[0], pdfURL, pdfType)
 			assert.Equal(t, pdfURL, obj.Str("url"))
 		})
+
+		t.Run("subclass object", func(t *testing.T) {
+			obj := Decode(t, `{
+				"@context": "https://www.w3.org/ns/activitystreams",
+				"type": "Document",
+				"name": "4Q Sales Forecast",
+				"url": [
+					{
+						"type": "Link",
+						"href": "http://example.org/4q-sales-forecast.pdf",
+						"mediaType": "application/pdf"
+					},
+					{
+						"type": "Link",
+						"href": "http://example.org/4q-sales-forecast.html",
+						"mediaType": "text/html"
+					}
+				]
+			}`)
+
+			links := obj.URLs()
+			require.Equal(t, 2, len(links))
+			assertLink(t, links[0], pdfURL, pdfType)
+			assertLink(t, links[1], "http://example.org/4q-sales-forecast.html", "text/html")
+			assert.Equal(t, pdfURL, obj.Str("url"))
+		})
 	})
 }
 

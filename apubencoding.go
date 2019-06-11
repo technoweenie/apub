@@ -47,11 +47,13 @@ func (o *Object) Str(key string) string {
 		return strconv.FormatInt(val, 10)
 	case map[string]interface{}:
 		o2, _ := o.valueAsObject(key, ival)
-		defkey, ok := defaults[o2.Type()]
-		if !ok {
-			return fmt.Sprintf("%v", val)
+		return o2.DefaultValue()
+	case []interface{}:
+		objs, _ := o.valueAsList(key, val)
+		if len(objs) == 0 {
+			return ""
 		}
-		return o2.Str(defkey)
+		return objs[0].DefaultValue()
 	default:
 		return fmt.Sprintf("%v", ival)
 	}
@@ -122,6 +124,14 @@ func (o *Object) valueAsObject(key string, ival interface{}) (*Object, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode %T value as object: %+v", ival, ival)
 	}
+}
+
+func (o *Object) DefaultValue() string {
+	defkey, ok := defaults[o.Type()]
+	if !ok {
+		return o.Str("id")
+	}
+	return o.Str(defkey)
 }
 
 func (o *Object) valueAsList(key string, list []interface{}) ([]*Object, error) {
