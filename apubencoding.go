@@ -28,8 +28,8 @@ func (o *Object) Name() string {
 	return o.String("name")
 }
 
-func (o *Object) URL() *Object {
-	return o.Object("url")
+func (o *Object) URLs() []*Object {
+	return o.List("url")
 }
 
 func (o *Object) String(key string) string {
@@ -62,8 +62,32 @@ func (o *Object) Object(key string) *Object {
 	if !ok {
 		return nil
 	}
+
+	if list, ok := ival.([]interface{}); ok {
+		objs, _ := o.valueAsList(key, list)
+		if len(objs) == 0 {
+			return nil
+		}
+		return objs[0]
+	}
+
 	obj, _ := o.valueAsObject(key, ival)
 	return obj
+}
+
+func (o *Object) List(key string) []*Object {
+	ival, ok := o.data[key]
+	if !ok {
+		return nil
+	}
+
+	if list, ok := ival.([]interface{}); ok {
+		objs, _ := o.valueAsList(key, list)
+		return objs
+	}
+
+	obj, _ := o.valueAsObject(key, ival)
+	return []*Object{obj}
 }
 
 func (o *Object) valueAsObject(key string, ival interface{}) (*Object, error) {
@@ -98,6 +122,18 @@ func (o *Object) valueAsObject(key string, ival interface{}) (*Object, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode %T value as object: %+v", ival, ival)
 	}
+}
+
+func (o *Object) valueAsList(key string, list []interface{}) ([]*Object, error) {
+	objs := make([]*Object, 0, len(list))
+	for _, iv := range list {
+		o2, err := o.valueAsObject(key, iv)
+		if err != nil {
+			return objs, err
+		}
+		objs = append(objs, o2)
+	}
+	return objs, nil
 }
 
 const TypeObject = "Object"

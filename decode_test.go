@@ -40,11 +40,6 @@ func TestDecode(t *testing.T) {
 			assert.Equal(t, expMediaType, link.String("mediaType"))
 		}
 
-		assertURL := func(t *testing.T, o *apubencoding.Object, expHref, expMediaType string) {
-			assert.Equal(t, expHref, o.String("url"))
-			assertLink(t, o.URL(), expHref, expMediaType)
-		}
-
 		pdfURL := "http://example.org/4q-sales-forecast.pdf"
 		pdfType := "application/pdf"
 
@@ -56,7 +51,10 @@ func TestDecode(t *testing.T) {
 				"url": "http://example.org/4q-sales-forecast.pdf"
 			}`)
 
-			assertURL(t, obj, pdfURL, "")
+			links := obj.URLs()
+			require.Equal(t, 1, len(links))
+			assertLink(t, links[0], pdfURL, "")
+			assert.Equal(t, pdfURL, obj.String("url"))
 		})
 
 		t.Run("subclass string", func(t *testing.T) {
@@ -67,7 +65,10 @@ func TestDecode(t *testing.T) {
 				"url": "http://example.org/4q-sales-forecast.pdf"
 			}`)
 
-			assertURL(t, obj, pdfURL, "")
+			links := obj.URLs()
+			require.Equal(t, 1, len(links))
+			assertLink(t, links[0], pdfURL, "")
+			assert.Equal(t, pdfURL, obj.String("url"))
 		})
 
 		t.Run("subclass object", func(t *testing.T) {
@@ -82,7 +83,10 @@ func TestDecode(t *testing.T) {
 				}
 			}`)
 
-			assertURL(t, obj, pdfURL, pdfType)
+			links := obj.URLs()
+			require.Equal(t, 1, len(links))
+			assertLink(t, links[0], pdfURL, pdfType)
+			assert.Equal(t, pdfURL, obj.String("url"))
 		})
 	})
 }
