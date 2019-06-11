@@ -46,7 +46,7 @@ func (o *Object) String(key string) string {
 	case int64:
 		return strconv.FormatInt(val, 10)
 	case map[string]interface{}:
-		o2 := &Object{lang: o.lang, data: val}
+		o2, _ := o.valueAsObject(key, ival)
 		defkey, ok := defaults[o2.Type()]
 		if !ok {
 			return fmt.Sprintf("%v", val)
@@ -62,25 +62,29 @@ func (o *Object) Object(key string) *Object {
 	if !ok {
 		return nil
 	}
+	obj, _ := o.valueAsObject(key, ival)
+	return obj
+}
 
+func (o *Object) valueAsObject(key string, ival interface{}) (*Object, error) {
 	switch val := ival.(type) {
 	case map[string]interface{}:
-		return &Object{lang: o.lang, data: val}
+		return &Object{lang: o.lang, data: val}, nil
 	case string:
 		otype := o.Type()
 		ptypes, ok := propertyTypes[otype]
 		if !ok && otype == TypeObject {
-			return nil
+			return nil, fmt.Errorf("unable to decode %s properties as objects", otype)
 		}
 
 		ptypes, ok = propertyTypes[TypeObject]
 		if !ok {
-			return nil
+			return nil, fmt.Errorf("unable to decode %s properties as objects", otype)
 		}
 
 		keyType, ok := ptypes[key]
 		if !ok {
-			return nil
+			return nil, fmt.Errorf("unable to decode %s %s property as object", otype, key)
 		}
 
 		return &Object{
@@ -90,10 +94,9 @@ func (o *Object) Object(key string) *Object {
 				"type":            keyType,
 				defaults[keyType]: val,
 			},
-		}
+		}, nil
 	default:
-		fmt.Printf("welp! %T %+v\n", ival, ival)
-		return nil
+		return nil, fmt.Errorf("unable to decode %T value as object: %+v", ival, ival)
 	}
 }
 
