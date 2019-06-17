@@ -8,7 +8,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-const DefaultLang = "en"
+var DefaultLang = "en"
 
 type Object struct {
 	path         []string
