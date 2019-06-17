@@ -74,7 +74,6 @@ func TestParse(t *testing.T) {
 		}`)
 
 		assert.Equal(t, "https://www.w3.org/ns/activitystreams", obj.Str("@context"))
-		assert.Equal(t, obj.Str("@context"), obj.Context())
 
 		assert.Equal(t, "Object", obj.Str("type"))
 		assert.Equal(t, obj.Str("type"), obj.Type())
@@ -88,7 +87,6 @@ func TestParse(t *testing.T) {
 		assert.Equal(t, "", obj.Str("not-a-property"))
 		notObj := obj.Object("not-a-property")
 		require.NotNil(t, notObj)
-		assert.Equal(t, "", notObj.Context())
 		assert.Equal(t, "", notObj.Type())
 		notList := obj.List("not-a-list")
 		assert.Equal(t, 0, len(notList))

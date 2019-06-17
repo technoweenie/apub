@@ -41,10 +41,6 @@ func New(data map[string]interface{}) *Object {
 	return obj
 }
 
-func (o *Object) Context() string {
-	return o.Str("@context")
-}
-
 func (o *Object) ID() string {
 	return o.Str("id")
 }
