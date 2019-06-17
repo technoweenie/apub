@@ -109,6 +109,9 @@ func TestDecodeMastodon(t *testing.T) {
 				assert.Equal(t, "https://example.com/image.jpg", urls[0].Str("href"))
 			}
 		}
+
+		assert.Nil(t, obj.Errors())
+		assert.Nil(t, obj.NonFatalErrors())
 	})
 
 	t.Run("note", func(t *testing.T) {
@@ -175,5 +178,8 @@ func TestDecodeMastodon(t *testing.T) {
 		if assert.Equal(t, 1, len(urls)) {
 			assert.Equal(t, "https://mastodon.gamedev.place/@bob/4815162342", urls[0].Str("href"))
 		}
+
+		assert.Nil(t, obj.Errors())
+		assert.Nil(t, obj.NonFatalErrors())
 	})
 }

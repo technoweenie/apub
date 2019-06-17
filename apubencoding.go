@@ -11,8 +11,10 @@ import (
 const DefaultLang = "en"
 
 type Object struct {
-	lang string
-	data map[string]interface{}
+	lang     string
+	data     map[string]interface{}
+	errors   []error
+	nonFatal []error
 }
 
 func (o *Object) Context() string {
@@ -40,7 +42,10 @@ func (o *Object) URLs() []*Object {
 }
 
 func (o *Object) Str(key string) string {
-	s, _ := o.Fetch(key)
+	s, err := o.Fetch(key)
+	if err != nil {
+		o.errors = append(o.errors, err)
+	}
 	return s
 }
 
@@ -78,7 +83,10 @@ func (o *Object) Fetch(key string) (string, error) {
 }
 
 func (o *Object) Object(key string) *Object {
-	obj, _ := o.FetchObject(key)
+	obj, err := o.FetchObject(key)
+	if err != nil {
+		o.errors = append(o.errors, err)
+	}
 	if obj == nil {
 		return &Object{lang: o.lang, data: make(map[string]interface{})}
 	}
@@ -106,7 +114,10 @@ func (o *Object) FetchObject(key string) (*Object, error) {
 }
 
 func (o *Object) List(key string) []*Object {
-	list, _ := o.FetchList(key)
+	list, err := o.FetchList(key)
+	if err != nil {
+		o.errors = append(o.errors, err)
+	}
 	return list
 }
 
@@ -128,17 +139,38 @@ func (o *Object) FetchList(key string) ([]*Object, error) {
 }
 
 func (o *Object) Content(lang string) string {
-	s, _ := o.FetchLang("content", lang)
+	s, err := o.FetchLang("content", lang)
+	if err != nil {
+		if FatalLangErr(err) {
+			o.errors = append(o.errors, err)
+		} else {
+			o.nonFatal = append(o.nonFatal, err)
+		}
+	}
 	return s
 }
 
 func (o *Object) Name(lang string) string {
-	s, _ := o.FetchLang("name", lang)
+	s, err := o.FetchLang("name", lang)
+	if err != nil {
+		if FatalLangErr(err) {
+			o.errors = append(o.errors, err)
+		} else {
+			o.nonFatal = append(o.nonFatal, err)
+		}
+	}
 	return s
 }
 
 func (o *Object) Summary(lang string) string {
-	s, _ := o.FetchLang("summary", lang)
+	s, err := o.FetchLang("summary", lang)
+	if err != nil {
+		if FatalLangErr(err) {
+			o.errors = append(o.errors, err)
+		} else {
+			o.nonFatal = append(o.nonFatal, err)
+		}
+	}
 	return s
 }
 
@@ -172,6 +204,14 @@ func (o *Object) FetchLang(key, lang string) (string, error) {
 	}
 
 	return val, nil
+}
+
+func (o *Object) Errors() []error {
+	return o.errors
+}
+
+func (o *Object) NonFatalErrors() []error {
+	return o.nonFatal
 }
 
 var ErrLangNotFound = errors.New("key not translated to given language")

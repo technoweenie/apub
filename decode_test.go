@@ -38,6 +38,9 @@ func TestDecode(t *testing.T) {
 		assert.Equal(t, "", notObj.Type())
 		notList := obj.List("not-a-list")
 		assert.Equal(t, 0, len(notList))
+
+		assert.Nil(t, obj.Errors())
+		assert.NotNil(t, obj.NonFatalErrors())
 	})
 
 	t.Run("object url", func(t *testing.T) {
@@ -64,6 +67,9 @@ func TestDecode(t *testing.T) {
 			require.Equal(t, 1, len(links))
 			assertLink(t, links[0], pdfURL, "")
 			assert.Equal(t, pdfURL, obj.Str("url"))
+
+			assert.Nil(t, obj.Errors())
+			assert.Nil(t, obj.NonFatalErrors())
 		})
 
 		t.Run("subclass string", func(t *testing.T) {
@@ -78,6 +84,9 @@ func TestDecode(t *testing.T) {
 			require.Equal(t, 1, len(links))
 			assertLink(t, links[0], pdfURL, "")
 			assert.Equal(t, pdfURL, obj.Str("url"))
+
+			assert.Nil(t, obj.Errors())
+			assert.Nil(t, obj.NonFatalErrors())
 		})
 
 		t.Run("subclass object", func(t *testing.T) {
@@ -96,6 +105,9 @@ func TestDecode(t *testing.T) {
 			require.Equal(t, 1, len(links))
 			assertLink(t, links[0], pdfURL, pdfType)
 			assert.Equal(t, pdfURL, obj.Str("url"))
+
+			assert.Nil(t, obj.Errors())
+			assert.Nil(t, obj.NonFatalErrors())
 		})
 
 		t.Run("subclass object", func(t *testing.T) {
@@ -122,6 +134,9 @@ func TestDecode(t *testing.T) {
 			assertLink(t, links[0], pdfURL, pdfType)
 			assertLink(t, links[1], "http://example.org/4q-sales-forecast.html", "text/html")
 			assert.Equal(t, pdfURL, obj.Str("url"))
+
+			assert.Nil(t, obj.Errors())
+			assert.Nil(t, obj.NonFatalErrors())
 		})
 	})
 
@@ -157,6 +172,9 @@ func TestDecode(t *testing.T) {
 			assert.NotNil(t, err)
 			assert.False(t, apubencoding.FatalLangErr(err))
 			assert.True(t, xerrors.Is(err, apubencoding.ErrLangNotFound), err)
+
+			assert.Nil(t, obj.Errors())
+			assert.NotNil(t, obj.NonFatalErrors())
 		})
 
 		t.Run("name", func(t *testing.T) {
@@ -180,6 +198,9 @@ func TestDecode(t *testing.T) {
 			assert.NotNil(t, err)
 			assert.False(t, apubencoding.FatalLangErr(err))
 			assert.True(t, xerrors.Is(err, apubencoding.ErrLangMapNotFound), err)
+
+			assert.Nil(t, obj.Errors())
+			assert.NotNil(t, obj.NonFatalErrors())
 		})
 
 		t.Run("content", func(t *testing.T) {
@@ -201,6 +222,9 @@ func TestDecode(t *testing.T) {
 			assert.NotNil(t, err)
 			assert.False(t, apubencoding.FatalLangErr(err))
 			assert.True(t, xerrors.Is(err, apubencoding.ErrLangNotFound), err)
+
+			assert.Nil(t, obj.Errors())
+			assert.NotNil(t, obj.NonFatalErrors())
 		})
 	})
 }
