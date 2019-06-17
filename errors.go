@@ -1,4 +1,4 @@
-package apubencoding
+package apub
 
 import (
 	"errors"

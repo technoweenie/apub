@@ -1,4 +1,4 @@
-package apubencoding_test
+package apub_test
 
 import (
 	"strings"

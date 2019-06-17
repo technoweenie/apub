@@ -1,4 +1,4 @@
-package apubencoding_test
+package apub_test
 
 import (
 	"strings"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/technoweenie/apubencoding"
+	"github.com/technoweenie/apub"
 	"golang.org/x/xerrors"
 )
 
@@ -14,13 +14,13 @@ func TestDecode(t *testing.T) {
 	t.Run("errors", func(t *testing.T) {
 		t.Run("valueAsObject", func(t *testing.T) {
 			obj := Decode(t, `{
-			"type": "Object",
-		  "object1": {
-				"type": "TestObject",
-				"icon": 123,
-				"test": "test"
-			}
-		}`)
+				"type": "Object",
+				"object1": {
+					"type": "TestObject",
+					"icon": 123,
+					"test": "test"
+				}
+			}`)
 
 			obj1, err := obj.FetchObject("object1")
 			assert.Nil(t, err)
@@ -30,28 +30,28 @@ func TestDecode(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, err = obj1.FetchObject("test")
-			assert.True(t, xerrors.Is(err, apubencoding.ErrKeyNotObject), err)
+			assert.True(t, xerrors.Is(err, apub.ErrKeyNotObject), err)
 
 			_, err = obj1.FetchObject("icon")
-			assert.True(t, xerrors.Is(err, apubencoding.ErrKeyTypeNotObject), err)
+			assert.True(t, xerrors.Is(err, apub.ErrKeyTypeNotObject), err)
 		})
 
 		t.Run("lang map", func(t *testing.T) {
 			obj := Decode(t, `{
-			"type": "Object",
-			"name": "test",
-			"image": {
-				"type": "Image",
-				"nameMap": {
-					"en": "image"
-				},
-				"url": "http://example.com/image.jpg"
-			}
-		}`)
+				"type": "Object",
+				"name": "test",
+				"image": {
+					"type": "Image",
+					"nameMap": {
+						"en": "image"
+					},
+					"url": "http://example.com/image.jpg"
+				}
+			}`)
 
 			name, err := obj.FetchLang("name", "en")
 			assert.Equal(t, "test", name)
-			assert.True(t, xerrors.Is(err, apubencoding.ErrLangMapNotFound))
+			assert.True(t, xerrors.Is(err, apub.ErrLangMapNotFound))
 
 			img := obj.Object("image")
 			require.NotNil(t, img)
@@ -61,7 +61,7 @@ func TestDecode(t *testing.T) {
 
 			esName, err := img.FetchLang("name", "es")
 			assert.Equal(t, "image", esName)
-			assert.True(t, xerrors.Is(err, apubencoding.ErrLangNotFound))
+			assert.True(t, xerrors.Is(err, apub.ErrLangNotFound))
 		})
 	})
 
@@ -98,7 +98,7 @@ func TestDecode(t *testing.T) {
 	})
 
 	t.Run("object url", func(t *testing.T) {
-		assertLink := func(t *testing.T, link *apubencoding.Object, expHref, expMediaType string) {
+		assertLink := func(t *testing.T, link *apub.Object, expHref, expMediaType string) {
 			require.NotNil(t, link)
 			assert.Equal(t, "Link", link.Str("type"))
 			assert.Equal(t, "Link", link.Type())
@@ -265,8 +265,8 @@ func TestDecode(t *testing.T) {
 			assert.Equal(t, "A simple <em>note</em>", otherLang)
 			assert.Equal(t, otherLang, obj.Summary("other"))
 			assert.NotNil(t, err)
-			assert.False(t, apubencoding.FatalLangErr(err))
-			assert.True(t, xerrors.Is(err, apubencoding.ErrLangNotFound), err)
+			assert.False(t, apub.FatalLangErr(err))
+			assert.True(t, xerrors.Is(err, apub.ErrLangNotFound), err)
 
 			assert.Nil(t, obj.Errors())
 			assert.NotNil(t, obj.NonFatalErrors())
@@ -277,22 +277,22 @@ func TestDecode(t *testing.T) {
 			assert.Equal(t, "Cane Sugar Processing", defaultLang)
 			assert.Equal(t, defaultLang, obj.Name(""))
 			assert.NotNil(t, err)
-			assert.False(t, apubencoding.FatalLangErr(err))
-			assert.True(t, xerrors.Is(err, apubencoding.ErrLangMapNotFound), err)
+			assert.False(t, apub.FatalLangErr(err))
+			assert.True(t, xerrors.Is(err, apub.ErrLangMapNotFound), err)
 
 			esLang, err := obj.FetchLang("name", "es")
 			assert.Equal(t, "Cane Sugar Processing", esLang)
 			assert.Equal(t, esLang, obj.Name("es"))
 			assert.NotNil(t, err)
-			assert.False(t, apubencoding.FatalLangErr(err))
-			assert.True(t, xerrors.Is(err, apubencoding.ErrLangMapNotFound), err)
+			assert.False(t, apub.FatalLangErr(err))
+			assert.True(t, xerrors.Is(err, apub.ErrLangMapNotFound), err)
 
 			otherLang, err := obj.FetchLang("name", "other")
 			assert.Equal(t, "Cane Sugar Processing", otherLang)
 			assert.Equal(t, otherLang, obj.Name("other"))
 			assert.NotNil(t, err)
-			assert.False(t, apubencoding.FatalLangErr(err))
-			assert.True(t, xerrors.Is(err, apubencoding.ErrLangMapNotFound), err)
+			assert.False(t, apub.FatalLangErr(err))
+			assert.True(t, xerrors.Is(err, apub.ErrLangMapNotFound), err)
 
 			assert.Nil(t, obj.Errors())
 			assert.NotNil(t, obj.NonFatalErrors())
@@ -303,8 +303,8 @@ func TestDecode(t *testing.T) {
 			assert.Equal(t, "", defaultLang)
 			assert.Equal(t, defaultLang, obj.Content(""))
 			assert.NotNil(t, err)
-			assert.False(t, apubencoding.FatalLangErr(err))
-			assert.True(t, xerrors.Is(err, apubencoding.ErrLangNotFound), err)
+			assert.False(t, apub.FatalLangErr(err))
+			assert.True(t, xerrors.Is(err, apub.ErrLangNotFound), err)
 
 			esLang, err := obj.FetchLang("content", "es")
 			assert.Equal(t, "Una <em>nota</em> sencilla", esLang)
@@ -315,8 +315,8 @@ func TestDecode(t *testing.T) {
 			assert.Equal(t, "", otherLang)
 			assert.Equal(t, otherLang, obj.Content("other"))
 			assert.NotNil(t, err)
-			assert.False(t, apubencoding.FatalLangErr(err))
-			assert.True(t, xerrors.Is(err, apubencoding.ErrLangNotFound), err)
+			assert.False(t, apub.FatalLangErr(err))
+			assert.True(t, xerrors.Is(err, apub.ErrLangNotFound), err)
 
 			assert.Nil(t, obj.Errors())
 			assert.NotNil(t, obj.NonFatalErrors())
@@ -324,8 +324,8 @@ func TestDecode(t *testing.T) {
 	})
 }
 
-func Decode(t *testing.T, input string) *apubencoding.Object {
-	dec := &apubencoding.Decoder{}
+func Decode(t *testing.T, input string) *apub.Object {
+	dec := &apub.Decoder{}
 	obj, err := dec.Decode(strings.NewReader(input))
 	require.Nil(t, err)
 	return obj
