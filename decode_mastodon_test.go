@@ -86,29 +86,9 @@ func TestDecodeMastodon(t *testing.T) {
 			assert.True(t, strings.HasPrefix(pem, "-----BEGIN PUBLIC KEY-----"), pem)
 		}
 
+		// /cc subclass object tests
 		assert.Equal(t, "https://example.com/icon.jpg", obj.Str("icon"))
-		icons := obj.Icons()
-		if assert.Equal(t, 1, len(icons)) {
-			assert.Equal(t, "Image", icons[0].Type())
-			assert.Equal(t, "image/jpeg", icons[0].Str("mediaType"))
-			assert.Equal(t, "https://example.com/icon.jpg", icons[0].Str("url"))
-			urls := icons[0].URLs()
-			if assert.Equal(t, 1, len(urls)) {
-				assert.Equal(t, "https://example.com/icon.jpg", urls[0].Str("href"))
-			}
-		}
-
 		assert.Equal(t, "https://example.com/image.jpg", obj.Str("image"))
-		images := obj.Images()
-		if assert.Equal(t, 1, len(images)) {
-			assert.Equal(t, "Image", images[0].Type())
-			assert.Equal(t, "image/jpeg", images[0].Str("mediaType"))
-			assert.Equal(t, "https://example.com/image.jpg", images[0].Str("url"))
-			urls := images[0].URLs()
-			if assert.Equal(t, 1, len(urls)) {
-				assert.Equal(t, "https://example.com/image.jpg", urls[0].Str("href"))
-			}
-		}
 
 		assert.Nil(t, obj.Errors())
 		assert.Nil(t, obj.NonFatalErrors())

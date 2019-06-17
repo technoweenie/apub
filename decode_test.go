@@ -11,8 +11,9 @@ import (
 )
 
 func TestDecode(t *testing.T) {
-	t.Run("valueAsObject errors", func(t *testing.T) {
-		obj := Decode(t, `{
+	t.Run("errors", func(t *testing.T) {
+		t.Run("valueAsObject", func(t *testing.T) {
+			obj := Decode(t, `{
 			"type": "Object",
 		  "object1": {
 				"type": "TestObject",
@@ -21,22 +22,22 @@ func TestDecode(t *testing.T) {
 			}
 		}`)
 
-		obj1, err := obj.FetchObject("object1")
-		assert.Nil(t, err)
+			obj1, err := obj.FetchObject("object1")
+			assert.Nil(t, err)
 
-		missing, err := obj1.FetchObject("missing")
-		assert.Nil(t, missing)
-		assert.Nil(t, err)
+			missing, err := obj1.FetchObject("missing")
+			assert.Nil(t, missing)
+			assert.Nil(t, err)
 
-		_, err = obj1.FetchObject("test")
-		assert.True(t, xerrors.Is(err, apubencoding.ErrKeyNotObject), err)
+			_, err = obj1.FetchObject("test")
+			assert.True(t, xerrors.Is(err, apubencoding.ErrKeyNotObject), err)
 
-		_, err = obj1.FetchObject("icon")
-		assert.True(t, xerrors.Is(err, apubencoding.ErrKeyTypeNotObject), err)
-	})
+			_, err = obj1.FetchObject("icon")
+			assert.True(t, xerrors.Is(err, apubencoding.ErrKeyTypeNotObject), err)
+		})
 
-	t.Run("lang errors", func(t *testing.T) {
-		obj := Decode(t, `{
+		t.Run("lang map", func(t *testing.T) {
+			obj := Decode(t, `{
 			"type": "Object",
 			"name": "test",
 			"image": {
@@ -48,19 +49,20 @@ func TestDecode(t *testing.T) {
 			}
 		}`)
 
-		name, err := obj.FetchLang("name", "en")
-		assert.Equal(t, "test", name)
-		assert.True(t, xerrors.Is(err, apubencoding.ErrLangMapNotFound))
+			name, err := obj.FetchLang("name", "en")
+			assert.Equal(t, "test", name)
+			assert.True(t, xerrors.Is(err, apubencoding.ErrLangMapNotFound))
 
-		img := obj.Object("image")
-		require.NotNil(t, img)
-		imgName, err := img.FetchLang("name", "en")
-		assert.Equal(t, "image", imgName)
-		assert.Nil(t, err)
+			img := obj.Object("image")
+			require.NotNil(t, img)
+			imgName, err := img.FetchLang("name", "en")
+			assert.Equal(t, "image", imgName)
+			assert.Nil(t, err)
 
-		esName, err := img.FetchLang("name", "es")
-		assert.Equal(t, "image", esName)
-		assert.True(t, xerrors.Is(err, apubencoding.ErrLangNotFound))
+			esName, err := img.FetchLang("name", "es")
+			assert.Equal(t, "image", esName)
+			assert.True(t, xerrors.Is(err, apubencoding.ErrLangNotFound))
+		})
 	})
 
 	t.Run("simple object", func(t *testing.T) {
@@ -150,13 +152,54 @@ func TestDecode(t *testing.T) {
 					"type": "Link",
 					"href": "http://example.org/4q-sales-forecast.pdf",
 					"mediaType": "application/pdf"
-				}
+				},
+				"icon": {
+					"type": "Image",
+					"url": [{
+						"type": "Link",
+						"href": "http://example.com/icon.jpg"
+					}]
+				},
+				"image": [{
+					"type": "Image",
+					"url": "http://example.com/image.jpg"
+				}]
 			}`)
 
-			links := obj.URLs()
-			require.Equal(t, 1, len(links))
-			assertLink(t, links[0], pdfURL, pdfType)
-			assert.Equal(t, pdfURL, obj.Str("url"))
+			t.Run("url", func(t *testing.T) {
+				links := obj.URLs()
+				require.Equal(t, 1, len(links))
+				assertLink(t, links[0], pdfURL, pdfType)
+				assert.Equal(t, pdfURL, obj.Str("url"))
+			})
+
+			t.Run("icon", func(t *testing.T) {
+				assert.Equal(t, "http://example.com/icon.jpg", obj.Str("icon"))
+				icons := obj.Icons()
+				if assert.Equal(t, 1, len(icons)) {
+					assert.Equal(t, "Image", icons[0].Type())
+					assert.Equal(t, "http://example.com/icon.jpg", icons[0].Str("url"))
+					urls := icons[0].URLs()
+					if assert.Equal(t, 1, len(urls)) {
+						assert.Equal(t, "Link", urls[0].Type())
+						assert.Equal(t, "http://example.com/icon.jpg", urls[0].Str("href"))
+					}
+				}
+			})
+
+			t.Run("image", func(t *testing.T) {
+				assert.Equal(t, "http://example.com/image.jpg", obj.Str("image"))
+				images := obj.Images()
+				if assert.Equal(t, 1, len(images)) {
+					assert.Equal(t, "Image", images[0].Type())
+					assert.Equal(t, "http://example.com/image.jpg", images[0].Str("url"))
+					urls := images[0].URLs()
+					if assert.Equal(t, 1, len(urls)) {
+						assert.Equal(t, "Link", urls[0].Type())
+						assert.Equal(t, "http://example.com/image.jpg", urls[0].Str("href"))
+					}
+				}
+			})
 
 			assert.Nil(t, obj.Errors())
 			assert.Nil(t, obj.NonFatalErrors())
