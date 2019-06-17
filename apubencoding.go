@@ -1,8 +1,11 @@
 package apubencoding
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
+
+	"golang.org/x/xerrors"
 )
 
 const DefaultLang = "en"
@@ -24,8 +27,12 @@ func (o *Object) Type() string {
 	return o.Str("type")
 }
 
-func (o *Object) Name() string {
-	return o.Str("name")
+func (o *Object) Icons() []*Object {
+	return o.List("icon")
+}
+
+func (o *Object) Images() []*Object {
+	return o.List("image")
 }
 
 func (o *Object) URLs() []*Object {
@@ -120,6 +127,66 @@ func (o *Object) FetchList(key string) ([]*Object, error) {
 	return []*Object{obj}, err
 }
 
+func (o *Object) Content(lang string) string {
+	s, _ := o.FetchLang("content", lang)
+	return s
+}
+
+func (o *Object) Name(lang string) string {
+	s, _ := o.FetchLang("name", lang)
+	return s
+}
+
+func (o *Object) Summary(lang string) string {
+	s, _ := o.FetchLang("summary", lang)
+	return s
+}
+
+func (o *Object) FetchLang(key, lang string) (string, error) {
+	if len(lang) == 0 {
+		lang = o.lang
+	}
+	if len(lang) == 0 {
+		return o.Str(key), xerrors.Errorf("FetchLang: %q in %q: %w", key, lang, ErrLangNotFound)
+	}
+
+	cmap, err := o.FetchObject(key + "Map")
+	if err != nil || cmap == nil {
+		if err == nil {
+			err = ErrLangMapNotFound
+		}
+		return o.Str(key), xerrors.Errorf("FetchLang: %q: %w", key, err)
+	}
+
+	val, err := cmap.Fetch(lang)
+	if err != nil || len(val) == 0 {
+		if err == nil {
+			err = ErrLangNotFound
+		}
+		noLangErr := xerrors.Errorf("FetchLang: %q in %q: %w", key, lang, err)
+		if lang != o.lang {
+			fallback, _ := o.FetchLang(key, o.lang)
+			return fallback, noLangErr
+		}
+		return o.Str(key), noLangErr
+	}
+
+	return val, nil
+}
+
+var ErrLangNotFound = errors.New("key not translated to given language")
+var ErrLangMapNotFound = errors.New("key has no language map")
+
+func FatalLangErr(err error) bool {
+	if xerrors.Is(err, ErrLangNotFound) {
+		return false
+	}
+	if xerrors.Is(err, ErrLangMapNotFound) {
+		return false
+	}
+	return true
+}
+
 func (o *Object) valueAsObject(key string, ival interface{}) (*Object, error) {
 	switch val := ival.(type) {
 	case map[string]interface{}:
@@ -178,10 +245,13 @@ const TypeObject = "Object"
 
 var propertyTypes = map[string]map[string]string{
 	TypeObject: map[string]string{
-		"url": "Link",
+		"icon":  "Image",
+		"image": "Image",
+		"url":   "Link",
 	},
 }
 
 var defaults = map[string]string{
-	"Link": "href",
+	"Image": "url",
+	"Link":  "href",
 }
