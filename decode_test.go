@@ -11,6 +11,58 @@ import (
 )
 
 func TestDecode(t *testing.T) {
+	t.Run("valueAsObject errors", func(t *testing.T) {
+		obj := Decode(t, `{
+			"type": "Object",
+		  "object1": {
+				"type": "TestObject",
+				"icon": 123,
+				"test": "test"
+			}
+		}`)
+
+		obj1, err := obj.FetchObject("object1")
+		assert.Nil(t, err)
+
+		missing, err := obj1.FetchObject("missing")
+		assert.Nil(t, missing)
+		assert.Nil(t, err)
+
+		_, err = obj1.FetchObject("test")
+		assert.True(t, xerrors.Is(err, apubencoding.ErrKeyNotObject), err)
+
+		_, err = obj1.FetchObject("icon")
+		assert.True(t, xerrors.Is(err, apubencoding.ErrKeyTypeNotObject), err)
+	})
+
+	t.Run("lang errors", func(t *testing.T) {
+		obj := Decode(t, `{
+			"type": "Object",
+			"name": "test",
+			"image": {
+				"type": "Image",
+				"nameMap": {
+					"en": "image"
+				},
+				"url": "http://example.com/image.jpg"
+			}
+		}`)
+
+		name, err := obj.FetchLang("name", "en")
+		assert.Equal(t, "test", name)
+		assert.True(t, xerrors.Is(err, apubencoding.ErrLangMapNotFound))
+
+		img := obj.Object("image")
+		require.NotNil(t, img)
+		imgName, err := img.FetchLang("name", "en")
+		assert.Equal(t, "image", imgName)
+		assert.Nil(t, err)
+
+		esName, err := img.FetchLang("name", "es")
+		assert.Equal(t, "image", esName)
+		assert.True(t, xerrors.Is(err, apubencoding.ErrLangNotFound))
+	})
+
 	t.Run("simple object", func(t *testing.T) {
 		obj := Decode(t, `{
 			"@context": "https://www.w3.org/ns/activitystreams",

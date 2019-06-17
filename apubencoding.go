@@ -1,9 +1,9 @@
 package apubencoding
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"golang.org/x/xerrors"
 )
@@ -11,10 +11,34 @@ import (
 const DefaultLang = "en"
 
 type Object struct {
-	lang     string
-	data     map[string]interface{}
-	errors   []error
-	nonFatal []error
+	path         []string
+	lang         string
+	data         map[string]interface{}
+	errors       []error
+	nonFatal     []error
+	addError     func(error)
+	addLangError func(error)
+}
+
+func New(data map[string]interface{}) *Object {
+	obj := &Object{lang: DefaultLang, data: data}
+	if ty := obj.Type(); len(ty) > 0 {
+		obj.path = []string{ty}
+	} else {
+		obj.path = []string{"UnknownType"}
+	}
+
+	obj.addError = func(err error) {
+		obj.errors = append(obj.errors, err)
+	}
+	obj.addLangError = func(err error) {
+		if FatalLangErr(err) {
+			obj.errors = append(obj.errors, err)
+			return
+		}
+		obj.nonFatal = append(obj.nonFatal, err)
+	}
+	return obj
 }
 
 func (o *Object) Context() string {
@@ -44,7 +68,7 @@ func (o *Object) URLs() []*Object {
 func (o *Object) Str(key string) string {
 	s, err := o.Fetch(key)
 	if err != nil {
-		o.errors = append(o.errors, err)
+		o.addError(err)
 	}
 	return s
 }
@@ -85,10 +109,10 @@ func (o *Object) Fetch(key string) (string, error) {
 func (o *Object) Object(key string) *Object {
 	obj, err := o.FetchObject(key)
 	if err != nil {
-		o.errors = append(o.errors, err)
+		o.addError(err)
 	}
 	if obj == nil {
-		return &Object{lang: o.lang, data: make(map[string]interface{})}
+		return o.newObj(key, make(map[string]interface{}))
 	}
 	return obj
 }
@@ -116,7 +140,7 @@ func (o *Object) FetchObject(key string) (*Object, error) {
 func (o *Object) List(key string) []*Object {
 	list, err := o.FetchList(key)
 	if err != nil {
-		o.errors = append(o.errors, err)
+		o.addError(err)
 	}
 	return list
 }
@@ -141,11 +165,7 @@ func (o *Object) FetchList(key string) ([]*Object, error) {
 func (o *Object) Content(lang string) string {
 	s, err := o.FetchLang("content", lang)
 	if err != nil {
-		if FatalLangErr(err) {
-			o.errors = append(o.errors, err)
-		} else {
-			o.nonFatal = append(o.nonFatal, err)
-		}
+		o.addLangError(err)
 	}
 	return s
 }
@@ -153,11 +173,7 @@ func (o *Object) Content(lang string) string {
 func (o *Object) Name(lang string) string {
 	s, err := o.FetchLang("name", lang)
 	if err != nil {
-		if FatalLangErr(err) {
-			o.errors = append(o.errors, err)
-		} else {
-			o.nonFatal = append(o.nonFatal, err)
-		}
+		o.addLangError(err)
 	}
 	return s
 }
@@ -165,11 +181,7 @@ func (o *Object) Name(lang string) string {
 func (o *Object) Summary(lang string) string {
 	s, err := o.FetchLang("summary", lang)
 	if err != nil {
-		if FatalLangErr(err) {
-			o.errors = append(o.errors, err)
-		} else {
-			o.nonFatal = append(o.nonFatal, err)
-		}
+		o.addLangError(err)
 	}
 	return s
 }
@@ -179,7 +191,8 @@ func (o *Object) FetchLang(key, lang string) (string, error) {
 		lang = o.lang
 	}
 	if len(lang) == 0 {
-		return o.Str(key), xerrors.Errorf("FetchLang: %q in %q: %w", key, lang, ErrLangNotFound)
+		return o.Str(key), xerrors.Errorf("FetchLang: %s.%s in %q: %w",
+			strings.Join(o.path, "."), key, lang, ErrLangNotFound)
 	}
 
 	cmap, err := o.FetchObject(key + "Map")
@@ -187,7 +200,8 @@ func (o *Object) FetchLang(key, lang string) (string, error) {
 		if err == nil {
 			err = ErrLangMapNotFound
 		}
-		return o.Str(key), xerrors.Errorf("FetchLang: %q: %w", key, err)
+		return o.Str(key), xerrors.Errorf("FetchLang: %s.%s: %w",
+			strings.Join(o.path, "."), key, err)
 	}
 
 	val, err := cmap.Fetch(lang)
@@ -195,7 +209,8 @@ func (o *Object) FetchLang(key, lang string) (string, error) {
 		if err == nil {
 			err = ErrLangNotFound
 		}
-		noLangErr := xerrors.Errorf("FetchLang: %q in %q: %w", key, lang, err)
+		noLangErr := xerrors.Errorf("FetchLang: %s.%s in %q: %w",
+			strings.Join(o.path, "."), key, lang, err)
 		if lang != o.lang {
 			fallback, _ := o.FetchLang(key, o.lang)
 			return fallback, noLangErr
@@ -214,50 +229,33 @@ func (o *Object) NonFatalErrors() []error {
 	return o.nonFatal
 }
 
-var ErrLangNotFound = errors.New("key not translated to given language")
-var ErrLangMapNotFound = errors.New("key has no language map")
-
-func FatalLangErr(err error) bool {
-	if xerrors.Is(err, ErrLangNotFound) {
-		return false
-	}
-	if xerrors.Is(err, ErrLangMapNotFound) {
-		return false
-	}
-	return true
-}
-
 func (o *Object) valueAsObject(key string, ival interface{}) (*Object, error) {
 	switch val := ival.(type) {
 	case map[string]interface{}:
-		return &Object{lang: o.lang, data: val}, nil
+		return o.newObj(key, val), nil
 	case string:
 		otype := o.Type()
-		ptypes, ok := propertyTypes[otype]
-		if !ok && otype == TypeObject {
-			return nil, fmt.Errorf("unable to decode %s properties as objects", otype)
-		}
+		var ptypes map[string]string
 
-		ptypes, ok = propertyTypes[TypeObject]
-		if !ok {
-			return nil, fmt.Errorf("unable to decode %s properties as objects", otype)
+		if pt, ok := propertyTypes[otype]; ok {
+			ptypes = pt
+		} else {
+			ptypes = propertyTypes[TypeObject] // always exists
 		}
 
 		keyType, ok := ptypes[key]
 		if !ok {
-			return nil, fmt.Errorf("unable to decode %s %s property as object", otype, key)
+			return nil, xerrors.Errorf("valueAsObject: (%s) %s key %q: %w",
+				otype, strings.Join(o.path, "."), key, ErrKeyNotObject)
 		}
 
-		return &Object{
-			lang: o.lang,
-			data: map[string]interface{}{
-				"@context":        "https://www.w3.org/ns/activitystreams",
-				"type":            keyType,
-				defaults[keyType]: val,
-			},
-		}, nil
+		return o.newObj(key, map[string]interface{}{
+			"type":            keyType,
+			defaults[keyType]: val,
+		}), nil
 	default:
-		return nil, fmt.Errorf("unable to decode %T value as object: %+v", ival, ival)
+		return nil, xerrors.Errorf("valueAsObject: (%s) %s key %q: (%T) %+v: %w",
+			o.Type(), strings.Join(o.path, "."), key, ival, ival, ErrKeyTypeNotObject)
 	}
 }
 
@@ -279,6 +277,16 @@ func (o *Object) valueAsList(key string, list []interface{}) ([]*Object, error) 
 		objs = append(objs, o2)
 	}
 	return objs, nil
+}
+
+func (o *Object) newObj(key string, data map[string]interface{}) *Object {
+	return &Object{
+		path:         append(o.path, key),
+		lang:         o.lang,
+		data:         data,
+		addError:     o.addError,
+		addLangError: o.addLangError,
+	}
 }
 
 const TypeObject = "Object"
