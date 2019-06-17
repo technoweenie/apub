@@ -10,10 +10,10 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func TestDecode(t *testing.T) {
+func TestParse(t *testing.T) {
 	t.Run("errors", func(t *testing.T) {
 		t.Run("valueAsObject", func(t *testing.T) {
-			obj := Decode(t, `{
+			obj := Parse(t, `{
 				"type": "Object",
 				"object1": {
 					"type": "TestObject",
@@ -37,7 +37,7 @@ func TestDecode(t *testing.T) {
 		})
 
 		t.Run("lang map", func(t *testing.T) {
-			obj := Decode(t, `{
+			obj := Parse(t, `{
 				"type": "Object",
 				"name": "test",
 				"image": {
@@ -66,7 +66,7 @@ func TestDecode(t *testing.T) {
 	})
 
 	t.Run("simple object", func(t *testing.T) {
-		obj := Decode(t, `{
+		obj := Parse(t, `{
 			"@context": "https://www.w3.org/ns/activitystreams",
 			"type": "Object",
 			"id": "http://www.test.example/object/1",
@@ -110,7 +110,7 @@ func TestDecode(t *testing.T) {
 		pdfType := "application/pdf"
 
 		t.Run("string", func(t *testing.T) {
-			obj := Decode(t, `{
+			obj := Parse(t, `{
 				"@context": "https://www.w3.org/ns/activitystreams",
 				"type": "Object",
 				"name": "4Q Sales Forecast",
@@ -127,7 +127,7 @@ func TestDecode(t *testing.T) {
 		})
 
 		t.Run("subclass string", func(t *testing.T) {
-			obj := Decode(t, `{
+			obj := Parse(t, `{
 				"@context": "https://www.w3.org/ns/activitystreams",
 				"type": "Document",
 				"name": "4Q Sales Forecast",
@@ -144,7 +144,7 @@ func TestDecode(t *testing.T) {
 		})
 
 		t.Run("subclass object", func(t *testing.T) {
-			obj := Decode(t, `{
+			obj := Parse(t, `{
 				"@context": "https://www.w3.org/ns/activitystreams",
 				"type": "Document",
 				"name": "4Q Sales Forecast",
@@ -206,7 +206,7 @@ func TestDecode(t *testing.T) {
 		})
 
 		t.Run("subclass object", func(t *testing.T) {
-			obj := Decode(t, `{
+			obj := Parse(t, `{
 				"@context": "https://www.w3.org/ns/activitystreams",
 				"type": "Document",
 				"name": "4Q Sales Forecast",
@@ -236,7 +236,7 @@ func TestDecode(t *testing.T) {
 	})
 
 	t.Run("content language map", func(t *testing.T) {
-		obj := Decode(t, `{
+		obj := Parse(t, `{
 			"@context": "https://www.w3.org/ns/activitystreams",
 			"name": "Cane Sugar Processing",
 			"type": "Note",
@@ -324,9 +324,9 @@ func TestDecode(t *testing.T) {
 	})
 }
 
-func Decode(t *testing.T, input string) *apub.Object {
-	dec := &apub.Decoder{}
-	obj, err := dec.Decode(strings.NewReader(input))
+func Parse(t *testing.T, input string) *apub.Object {
+	dec := &apub.Parser{}
+	obj, err := dec.Parse(strings.NewReader(input))
 	require.Nil(t, err)
 	return obj
 }

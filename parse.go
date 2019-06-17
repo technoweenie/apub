@@ -5,17 +5,17 @@ import (
 	"io"
 )
 
-type Decoder struct {
+type Parser struct {
 	Language string
 }
 
-func (d *Decoder) Decode(input io.Reader) (*Object, error) {
+func (p *Parser) Parse(input io.Reader) (*Object, error) {
 	data := make(map[string]interface{})
 	err := json.NewDecoder(input).Decode(&data)
 
 	obj := New(data)
-	if len(d.Language) > 0 {
-		obj.lang = d.Language
+	if len(p.Language) > 0 {
+		obj.lang = p.Language
 	}
 
 	return obj, err

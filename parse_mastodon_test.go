@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDecodeMastodon(t *testing.T) {
+func TestParseMastodon(t *testing.T) {
 	t.Run("actor", func(t *testing.T) {
-		obj := Decode(t, `{
+		obj := Parse(t, `{
 			"@context": [
 				"https://www.w3.org/ns/activitystreams",
 				"https://w3id.org/security/v1",
@@ -95,7 +95,7 @@ func TestDecodeMastodon(t *testing.T) {
 	})
 
 	t.Run("note", func(t *testing.T) {
-		obj := Decode(t, `{
+		obj := Parse(t, `{
 			"@context": [
 				"https://www.w3.org/ns/activitystreams",
 				{
