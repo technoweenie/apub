@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/technoweenie/apub"
+	"golang.org/x/xerrors"
 )
 
 func TestParseMastodon(t *testing.T) {
@@ -92,6 +95,86 @@ func TestParseMastodon(t *testing.T) {
 
 		assert.Nil(t, obj.Errors())
 		assert.Nil(t, obj.NonFatalErrors())
+	})
+
+	t.Run("note collection", func(t *testing.T) {
+		obj := Parse(t, `{
+			"@context": "https://www.w3.org/ns/activitystreams",
+			"id": "https://mastodon.gamedev.place/users/bob/collections/featured",
+			"type": "OrderedCollection",
+			"totalItems": 1,
+			"orderedItems": [
+				{
+					"id": "https://mastodon.gamedev.place/users/bob/statuses/4815162342",
+					"type": "Note",
+					"summary": null,
+					"inReplyTo": null,
+					"published": "2019-04-14T17:19:09Z",
+					"url": "https://mastodon.gamedev.place/@bob/4815162342",
+					"attributedTo": "https://mastodon.gamedev.place/users/bob",
+					"to": [
+						"https://www.w3.org/ns/activitystreams#Public"
+					],
+					"cc": [
+						"https://mastodon.gamedev.place/users/bob/followers"
+					],
+					"sensitive": false,
+					"atomUri": "https://mastodon.gamedev.place/users/bob/statuses/4815162342",
+					"inReplyToAtomUri": null,
+					"conversation": "tag:mastodon.gamedev.place,2019-04-14:objectId=4815162342:objectType=Conversation",
+					"content": "<p>Content</p>",
+					"contentMap": {
+						"en": "<p>EN Content</p>"
+					},
+					"attachment": [],
+					"tag": [
+						{
+							"type": "Hashtag",
+							"href": "https://mastodon.gamedev.place/tags/activitypub",
+							"name": "#activitypub"
+						}
+					],
+					"replies": {
+						"id": "https://mastodon.gamedev.place/users/bob/statuses/4815162342/replies",
+						"type": "Collection",
+						"first": {
+							"type": "CollectionPage",
+							"partOf": "https://mastodon.gamedev.place/users/bob/statuses/4815162342/replies",
+							"items": []
+						}
+					}
+				}
+			]
+		}`)
+
+		assert.Equal(t, "OrderedCollection", obj.Type())
+		assert.Equal(t, "https://mastodon.gamedev.place/users/bob/collections/featured", obj.ID())
+
+		items := obj.List("orderedItems")
+		require.Equal(t, 1, len(items))
+		item := items[0]
+		assert.Equal(t, "https://mastodon.gamedev.place/users/bob/statuses/4815162342", item.ID())
+		assert.Equal(t, "Note", item.Type())
+		assert.Equal(t, "<p>EN Content</p>", item.Content(""))
+		assert.Equal(t, "<p>EN Content</p>", item.Content("es"))
+
+		urls := item.URLs()
+		if assert.Equal(t, 1, len(urls), urls) {
+			assert.Equal(t, "https://mastodon.gamedev.place/@bob/4815162342", urls[0].Str("href"))
+		}
+
+		replies := item.List("replies")
+		if assert.Equal(t, 1, len(replies), replies) {
+			assert.Equal(t, "https://mastodon.gamedev.place/users/bob/statuses/4815162342/replies", replies[0].ID())
+			assert.Equal(t, "Collection", replies[0].Type())
+		}
+
+		assert.Nil(t, obj.Errors())
+
+		nfErrs := obj.NonFatalErrors()
+		if assert.Equal(t, 1, len(nfErrs), nfErrs) {
+			assert.True(t, xerrors.Is(nfErrs[0], apub.ErrLangNotFound), nfErrs[0])
+		}
 	})
 
 	t.Run("note", func(t *testing.T) {
