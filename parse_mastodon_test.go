@@ -149,6 +149,7 @@ func TestParseMastodon(t *testing.T) {
 
 		assert.Equal(t, "OrderedCollection", obj.Type())
 		assert.Equal(t, "https://mastodon.gamedev.place/users/bob/collections/featured", obj.ID())
+		assert.Equal(t, 1, obj.Int("totalItems"))
 
 		items := obj.List("orderedItems")
 		require.Equal(t, 1, len(items))

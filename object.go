@@ -2,6 +2,7 @@ package apub
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -99,6 +100,36 @@ func (o *Object) Fetch(key string) (string, error) {
 		return objs[0].DefaultValue(), nil
 	default:
 		return fmt.Sprintf("%v", ival), nil
+	}
+}
+
+func (o *Object) Int(key string) int {
+	i, err := o.FetchInt(key)
+	if err != nil {
+		o.addError(err)
+	}
+	return i
+}
+
+func (o *Object) FetchInt(key string) (int, error) {
+	ival, ok := o.data[key]
+	if !ok {
+		return 0, nil
+	}
+
+	switch val := ival.(type) {
+	case int:
+		return val, nil
+	case float64:
+		return int(math.Round(val)), nil
+	case string:
+		i, err := strconv.Atoi(val)
+		if err != nil {
+			return i, xerrors.Errorf("FetchInt: %q: %w", val, ErrInvalidInt)
+		}
+		return i, nil
+	default:
+		return 0, xerrors.Errorf("FetchInt: %T %+v: %w", ival, ival, ErrInvalidInt)
 	}
 }
 

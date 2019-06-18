@@ -17,7 +17,7 @@ func TestParse(t *testing.T) {
 				"type": "Object",
 				"object1": {
 					"type": "TestObject",
-					"icon": 123,
+					"badobject": 123,
 					"test": "test"
 				}
 			}`)
@@ -32,8 +32,14 @@ func TestParse(t *testing.T) {
 			_, err = obj1.FetchObject("test")
 			assert.True(t, xerrors.Is(err, apub.ErrKeyNotObject), err)
 
-			_, err = obj1.FetchObject("icon")
+			_, err = obj1.FetchObject("badobject")
 			assert.True(t, xerrors.Is(err, apub.ErrKeyTypeNotObject), err)
+
+			i, err := obj1.FetchInt("test")
+			assert.Equal(t, 0, i)
+			if assert.NotNil(t, err) {
+				assert.True(t, xerrors.Is(err, apub.ErrInvalidInt), err)
+			}
 		})
 
 		t.Run("lang map", func(t *testing.T) {
@@ -70,7 +76,11 @@ func TestParse(t *testing.T) {
 			"@context": "https://www.w3.org/ns/activitystreams",
 			"type": "Object",
 			"id": "http://www.test.example/object/1",
-			"name": "A Simple, non-specific object"
+			"name": "A Simple, non-specific object",
+			"num": 101,
+			"roundup": 101.5,
+			"rounddown": 103.45,
+			"strnum": "104"
 		}`)
 
 		assert.Equal(t, "https://www.w3.org/ns/activitystreams", obj.Str("@context"))
@@ -83,6 +93,11 @@ func TestParse(t *testing.T) {
 
 		assert.Equal(t, "A Simple, non-specific object", obj.Str("name"))
 		assert.Equal(t, obj.Str("name"), obj.Name(""))
+
+		assert.Equal(t, 101, obj.Int("num"))
+		assert.Equal(t, 102, obj.Int("roundup"))
+		assert.Equal(t, 103, obj.Int("rounddown"))
+		assert.Equal(t, 104, obj.Int("strnum"))
 
 		assert.Equal(t, "", obj.Str("not-a-property"))
 		notObj := obj.Object("not-a-property")
