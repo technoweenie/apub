@@ -12,6 +12,7 @@ var (
 	ErrKeyNotObject     = errors.New("unable to decode key as object")
 	ErrKeyTypeNotObject = errors.New("unable to decode type as object")
 	ErrInvalidInt       = errors.New("unable to decode value as int")
+	ErrInvalidBool      = errors.New("unable to decode value as bool")
 )
 
 func FatalLangErr(err error) bool {

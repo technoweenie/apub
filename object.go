@@ -79,10 +79,8 @@ func (o *Object) Fetch(key string) (string, error) {
 	switch val := ival.(type) {
 	case string:
 		return val, nil
-	case int:
-		return strconv.Itoa(val), nil
-	case int64:
-		return strconv.FormatInt(val, 10), nil
+	case float64:
+		return strconv.FormatFloat(val, 'f', -1, 64), nil
 	case map[string]interface{}:
 		o2, err := o.valueAsObject(key, ival)
 		if err != nil {
@@ -118,8 +116,6 @@ func (o *Object) FetchInt(key string) (int, error) {
 	}
 
 	switch val := ival.(type) {
-	case int:
-		return val, nil
 	case float64:
 		return int(math.Round(val)), nil
 	case string:
@@ -130,6 +126,39 @@ func (o *Object) FetchInt(key string) (int, error) {
 		return i, nil
 	default:
 		return 0, xerrors.Errorf("FetchInt: %T %+v: %w", ival, ival, ErrInvalidInt)
+	}
+}
+
+func (o *Object) Bool(key string) bool {
+	b, err := o.FetchBool(key)
+	if err != nil {
+		o.addError(err)
+	}
+	return b
+}
+
+func (o *Object) FetchBool(key string) (bool, error) {
+	ival, ok := o.data[key]
+	if !ok {
+		return false, nil
+	}
+
+	switch val := ival.(type) {
+	case bool:
+		return val, nil
+	case string:
+		b, err := strconv.ParseBool(val)
+		if err != nil {
+			return b, xerrors.Errorf("FetchBool: %q: %w", val, err)
+		}
+		return b, nil
+	case float64:
+		if n := int64(math.Round(val)); n == 1 {
+			return true, nil
+		}
+		return false, nil
+	default:
+		return false, xerrors.Errorf("FetchBool: %T %+v: %w", ival, ival, ErrInvalidBool)
 	}
 }
 

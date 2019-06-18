@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/technoweenie/apub"
+	"golang.org/x/xerrors"
 )
 
 func TestParseObject(t *testing.T) {
@@ -16,6 +17,15 @@ func TestParseObject(t *testing.T) {
 			"type": "Object",
 			"id": "http://www.test.example/object/1",
 			"name": "A Simple, non-specific object",
+			"true": true,
+			"false": false,
+			"t": "t",
+			"f": "f",
+			"t1": 1,
+			"t1s": "1",
+			"f0": 0,
+			"f0s": "0",
+			"invalidbool": "invalid",
 			"num": 101,
 			"roundup": 101.5,
 			"rounddown": 103.45,
@@ -33,10 +43,25 @@ func TestParseObject(t *testing.T) {
 		assert.Equal(t, "A Simple, non-specific object", obj.Str("name"))
 		assert.Equal(t, obj.Str("name"), obj.Name(""))
 
+		assert.Equal(t, "1", obj.Str("t1"))
+		assert.Equal(t, "0", obj.Str("f0"))
+		assert.Equal(t, "103.45", obj.Str("rounddown"))
+		assert.Equal(t, "true", obj.Str("true"))
+		assert.Equal(t, "false", obj.Str("false"))
+
 		assert.Equal(t, 101, obj.Int("num"))
 		assert.Equal(t, 102, obj.Int("roundup"))
 		assert.Equal(t, 103, obj.Int("rounddown"))
 		assert.Equal(t, 104, obj.Int("strnum"))
+
+		assert.True(t, obj.Bool("true"))
+		assert.True(t, obj.Bool("t"))
+		assert.True(t, obj.Bool("t1"))
+		assert.True(t, obj.Bool("t1s"))
+		assert.False(t, obj.Bool("false"))
+		assert.False(t, obj.Bool("f"))
+		assert.False(t, obj.Bool("f0"))
+		assert.False(t, obj.Bool("f0s"))
 
 		assert.Equal(t, "", obj.Str("not-a-property"))
 		notObj := obj.Object("not-a-property")
@@ -46,7 +71,10 @@ func TestParseObject(t *testing.T) {
 		assert.Equal(t, 0, len(notList))
 
 		assert.Nil(t, obj.Errors())
-		assert.NotNil(t, obj.NonFatalErrors())
+		nfErrs := obj.NonFatalErrors()
+		if assert.Equal(t, 1, len(nfErrs), nfErrs) {
+			assert.True(t, xerrors.Is(nfErrs[0], apub.ErrLangMapNotFound), nfErrs[0])
+		}
 	})
 
 	t.Run("object url", func(t *testing.T) {
