@@ -3,6 +3,7 @@ package apub_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,12 +28,20 @@ func TestParseObject(t *testing.T) {
 			"f0s": "0",
 			"invalidbool": "invalid",
 			"num": 101,
+			"time1": "2019-04-14T17:19:09Z",
+			"time2": "2014-12-31T23:00:00-08:00",
 			"roundup": 101.5,
 			"rounddown": 103.45,
 			"strnum": "104"
 		}`)
 
 		assert.Equal(t, "https://www.w3.org/ns/activitystreams", obj.Str("@context"))
+
+		pst, err := time.LoadLocation("America/Los_Angeles")
+		require.Nil(t, err)
+
+		assert.Equal(t, time.Date(2019, 4, 14, 17, 19, 9, 0, time.UTC), obj.Time("time1"))
+		assert.Equal(t, time.Date(2014, 12, 31, 23, 0, 0, 0, pst).Unix(), obj.Time("time2").Unix())
 
 		assert.Equal(t, "Object", obj.Str("type"))
 		assert.Equal(t, obj.Str("type"), obj.Type())

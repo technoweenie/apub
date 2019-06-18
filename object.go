@@ -5,6 +5,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/xerrors"
 )
@@ -187,6 +188,34 @@ func (o *Object) FetchBool(key string) (bool, error) {
 		return false, nil
 	default:
 		return false, xerrors.Errorf("FetchBool: %T %+v: %w", ival, ival, ErrInvalidBool)
+	}
+}
+
+func (o *Object) Time(key string) time.Time {
+	t, err := o.FetchTime(key)
+	if err != nil {
+		o.addError(err)
+	}
+	return t
+}
+
+func (o *Object) FetchTime(key string) (time.Time, error) {
+	ival, ok := o.data[key]
+	if !ok {
+		var t time.Time
+		return t, nil
+	}
+
+	switch val := ival.(type) {
+	case string:
+		t, err := time.Parse(time.RFC3339, val)
+		if err != nil {
+			return t, xerrors.Errorf("FetchTime: %q: %w", val, ErrInvalidTime)
+		}
+		return t, nil
+	default:
+		var t time.Time
+		return t, xerrors.Errorf("FetchTime: %T %+v: %w", ival, ival, ErrInvalidTime)
 	}
 }
 

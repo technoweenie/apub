@@ -14,6 +14,7 @@ var (
 	ErrInvalidBool      = errors.New("unable to decode value as bool")
 	ErrInvalidFloat     = errors.New("unable to decode value as float")
 	ErrInvalidInt       = errors.New("unable to decode value as int")
+	ErrInvalidTime      = errors.New("unable to decode value as time")
 )
 
 func FatalLangErr(err error) bool {
