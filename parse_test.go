@@ -230,6 +230,55 @@ func TestParseObject(t *testing.T) {
 	})
 }
 
+func TestParseLists(t *testing.T) {
+	obj := Parse(t, `{
+		"type": "TestParseListsObject",
+		"attachment": [
+			{
+				"type": "Image",
+				"mediaType": "image/jpeg",
+				"url": "https://example.com/attachment.jpg"
+			}, {
+				"type": "Link",
+				"href": "https://example.com/link.jpg"
+			}
+		],
+		"tag": [
+			{
+				"type": "Hashtag",
+				"href": "https://example.com/tags/activitypub",
+				"name": "#activitypub"
+			}, {
+				"type": "Person",
+				"id": "http://sally.example.org",
+				"name": "Sally"
+			}
+		]
+	}`)
+
+	atts := obj.Attachments()
+	require.Equal(t, 2, len(atts), atts)
+	assert.Equal(t, "Image", atts[0].Type())
+	assert.Equal(t, "image/jpeg", atts[0].Str("mediaType"))
+	assert.Equal(t, "https://example.com/attachment.jpg", atts[0].Str("url"))
+	assert.Equal(t, "Link", atts[1].Type())
+	assert.Equal(t, "https://example.com/link.jpg", atts[1].Str("href"))
+
+	tags := obj.Tags()
+	require.Equal(t, 2, len(tags), tags)
+	assert.Equal(t, "Hashtag", tags[0].Type())
+	assert.Equal(t, "https://example.com/tags/activitypub", tags[0].Str("href"))
+	assert.Equal(t, "#activitypub", tags[0].Name(""))
+	assert.Equal(t, "Person", tags[1].Type())
+	assert.Equal(t, "http://sally.example.org", tags[1].ID())
+	assert.Equal(t, "Sally", tags[1].Name(""))
+
+	assert.Nil(t, obj.Errors())
+	for _, err := range obj.NonFatalErrors() {
+		assert.True(t, xerrors.Is(err, apub.ErrLangMapNotFound), err)
+	}
+}
+
 func Parse(t *testing.T, input string) *apub.Object {
 	dec := &apub.Parser{}
 	obj, err := dec.Parse(strings.NewReader(input))

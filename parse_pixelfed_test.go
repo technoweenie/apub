@@ -4,6 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/technoweenie/apub"
+	"golang.org/x/xerrors"
 )
 
 func TestParsePixelfed(t *testing.T) {
@@ -115,5 +118,16 @@ func TestParsePixelfed(t *testing.T) {
 		assert.Equal(t, "content", obj.Content(""))
 		assert.False(t, obj.Bool("sensitive"))
 		assert.True(t, obj.Bool("commentsEnabled"))
+		assert.Equal(t, 0, len(obj.Tags()))
+		atts := obj.Attachments()
+		if assert.Equal(t, 1, len(atts), atts) {
+			assert.Equal(t, "Image", atts[0].Type())
+			assert.Equal(t, "image/jpeg", atts[0].Str("mediaType"))
+		}
+
+		assert.Nil(t, obj.Errors())
+		nfErrs := obj.NonFatalErrors()
+		require.Equal(t, 1, len(nfErrs), nfErrs)
+		assert.True(t, xerrors.Is(nfErrs[0], apub.ErrLangMapNotFound), nfErrs[0])
 	})
 }

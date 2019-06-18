@@ -55,8 +55,16 @@ func (o *Object) Icons() []*Object {
 	return o.List("icon")
 }
 
+func (o *Object) Attachments() []*Object {
+	return o.List("attachment")
+}
+
 func (o *Object) Images() []*Object {
 	return o.List("image")
+}
+
+func (o *Object) Tags() []*Object {
+	return o.List("tag")
 }
 
 func (o *Object) URLs() []*Object {

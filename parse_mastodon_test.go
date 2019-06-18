@@ -82,6 +82,8 @@ func TestParseMastodon(t *testing.T) {
 		assert.Equal(t, "Person", obj.Type())
 		assert.Equal(t, "https://mastodon.gamedev.place/users/bob/following", obj.Str("following"))
 		assert.Equal(t, "<p>Bob</p>", obj.Str("summary"))
+		assert.Equal(t, 0, len(obj.Attachments()))
+		assert.Equal(t, 0, len(obj.Tags()))
 
 		pubKey := obj.Object("publicKey")
 		if assert.NotNil(t, pubKey) {
@@ -161,6 +163,13 @@ func TestParseMastodon(t *testing.T) {
 		assert.Equal(t, "<p>EN Content</p>", item.Content("es"))
 		assert.Equal(t, time.Date(2019, 4, 14, 17, 19, 9, 0, time.UTC), item.Time("published"))
 		assert.False(t, item.Bool("sensitive"))
+		assert.Equal(t, 0, len(item.Attachments()))
+		tags := item.Tags()
+		if assert.Equal(t, 1, len(tags)) {
+			assert.Equal(t, "Hashtag", tags[0].Type())
+			assert.Equal(t, "https://mastodon.gamedev.place/tags/activitypub", tags[0].Str("href"))
+			assert.Equal(t, "#activitypub", tags[0].Name(""))
+		}
 
 		urls := item.URLs()
 		if assert.Equal(t, 1, len(urls), urls) {
@@ -176,8 +185,9 @@ func TestParseMastodon(t *testing.T) {
 		assert.Nil(t, obj.Errors())
 
 		nfErrs := obj.NonFatalErrors()
-		if assert.Equal(t, 1, len(nfErrs), nfErrs) {
+		if assert.Equal(t, 2, len(nfErrs), nfErrs) {
 			assert.True(t, xerrors.Is(nfErrs[0], apub.ErrLangNotFound), nfErrs[0])
+			assert.True(t, xerrors.Is(nfErrs[1], apub.ErrLangMapNotFound), nfErrs[1])
 		}
 	})
 
@@ -240,6 +250,8 @@ func TestParseMastodon(t *testing.T) {
 		assert.Equal(t, "<p>Content</p>", obj.Str("content"))
 		assert.Equal(t, "<p>Content EN</p>", obj.Content(""))
 		assert.Equal(t, time.Date(2019, 6, 13, 4, 46, 37, 0, time.UTC), obj.Time("published"))
+		assert.Equal(t, 0, len(obj.Attachments()))
+		assert.Equal(t, 0, len(obj.Tags()))
 
 		assert.Equal(t, "https://mastodon.gamedev.place/@bob/4815162342", obj.Str("url"))
 		urls := obj.URLs()
