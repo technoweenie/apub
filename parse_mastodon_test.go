@@ -12,7 +12,7 @@ import (
 )
 
 func TestParseMastodon(t *testing.T) {
-	t.Run("actor", func(t *testing.T) {
+	t.Run("person", func(t *testing.T) {
 		obj := Parse(t, `{
 			"@context": [
 				"https://www.w3.org/ns/activitystreams",
