@@ -54,6 +54,11 @@ func TestParseObject(t *testing.T) {
 		assert.Equal(t, 103, obj.Int("rounddown"))
 		assert.Equal(t, 104, obj.Int("strnum"))
 
+		assert.Equal(t, float64(101), obj.Float("num"))
+		assert.Equal(t, float64(101.5), obj.Float("roundup"))
+		assert.Equal(t, float64(103.45), obj.Float("rounddown"))
+		assert.Equal(t, float64(104), obj.Float("strnum"))
+
 		assert.True(t, obj.Bool("true"))
 		assert.True(t, obj.Bool("t"))
 		assert.True(t, obj.Bool("t1"))

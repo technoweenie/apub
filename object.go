@@ -129,6 +129,34 @@ func (o *Object) FetchInt(key string) (int, error) {
 	}
 }
 
+func (o *Object) Float(key string) float64 {
+	f, err := o.FetchFloat(key)
+	if err != nil {
+		o.addError(err)
+	}
+	return f
+}
+
+func (o *Object) FetchFloat(key string) (float64, error) {
+	ival, ok := o.data[key]
+	if !ok {
+		return 0, nil
+	}
+
+	switch val := ival.(type) {
+	case float64:
+		return val, nil
+	case string:
+		f, err := strconv.ParseFloat(val, 64)
+		if err != nil {
+			return f, xerrors.Errorf("FetchFloat: %q: %w", val, ErrInvalidFloat)
+		}
+		return f, nil
+	default:
+		return 0, xerrors.Errorf("FetchFloat: %T %+v: %w", ival, ival, ErrInvalidFloat)
+	}
+}
+
 func (o *Object) Bool(key string) bool {
 	b, err := o.FetchBool(key)
 	if err != nil {

@@ -11,8 +11,9 @@ var (
 	ErrLangMapNotFound  = errors.New("key has no language map")
 	ErrKeyNotObject     = errors.New("unable to decode key as object")
 	ErrKeyTypeNotObject = errors.New("unable to decode type as object")
-	ErrInvalidInt       = errors.New("unable to decode value as int")
 	ErrInvalidBool      = errors.New("unable to decode value as bool")
+	ErrInvalidFloat     = errors.New("unable to decode value as float")
+	ErrInvalidInt       = errors.New("unable to decode value as int")
 )
 
 func FatalLangErr(err error) bool {
