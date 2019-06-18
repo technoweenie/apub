@@ -3,6 +3,7 @@ package apub_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -158,6 +159,8 @@ func TestParseMastodon(t *testing.T) {
 		assert.Equal(t, "Note", item.Type())
 		assert.Equal(t, "<p>EN Content</p>", item.Content(""))
 		assert.Equal(t, "<p>EN Content</p>", item.Content("es"))
+		assert.Equal(t, time.Date(2019, 4, 14, 17, 19, 9, 0, time.UTC), item.Time("published"))
+		assert.False(t, item.Bool("sensitive"))
 
 		urls := item.URLs()
 		if assert.Equal(t, 1, len(urls), urls) {
@@ -236,6 +239,7 @@ func TestParseMastodon(t *testing.T) {
 		assert.Equal(t, "Note", obj.Type())
 		assert.Equal(t, "<p>Content</p>", obj.Str("content"))
 		assert.Equal(t, "<p>Content EN</p>", obj.Content(""))
+		assert.Equal(t, time.Date(2019, 6, 13, 4, 46, 37, 0, time.UTC), obj.Time("published"))
 
 		assert.Equal(t, "https://mastodon.gamedev.place/@bob/4815162342", obj.Str("url"))
 		urls := obj.URLs()
