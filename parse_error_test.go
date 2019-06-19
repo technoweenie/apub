@@ -27,8 +27,10 @@ func TestError(t *testing.T) {
 		assert.Nil(t, missing)
 		assert.Nil(t, err)
 
-		_, err = obj1.FetchObject("test")
-		assert.True(t, xerrors.Is(err, apub.ErrKeyNotObject), err)
+		test, err := obj1.FetchObject("test")
+		assert.Equal(t, "", test.Type())
+		assert.Equal(t, "test", test.ID())
+		assert.Nil(t, err)
 
 		_, err = obj1.FetchObject("badobject")
 		assert.True(t, xerrors.Is(err, apub.ErrKeyTypeNotObject), err)

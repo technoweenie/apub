@@ -18,6 +18,7 @@ func TestParseObject(t *testing.T) {
 			"type": "Object",
 			"id": "http://www.test.example/object/1",
 			"name": "A Simple, non-specific object",
+			"actor": "http://example.com/actor",
 			"true": true,
 			"false": false,
 			"t": "t",
@@ -83,6 +84,14 @@ func TestParseObject(t *testing.T) {
 		assert.Equal(t, "", notObj.Type())
 		notList := obj.List("not-a-list")
 		assert.Equal(t, 0, len(notList))
+
+		actor := obj.Object("actor")
+		assert.Equal(t, "", actor.Type())
+		assert.Equal(t, "http://example.com/actor", actor.ID())
+
+		target := obj.Object("target")
+		assert.Equal(t, "", target.Type())
+		assert.Equal(t, "", target.ID())
 
 		assert.Nil(t, obj.Errors())
 		nfErrs := obj.NonFatalErrors()

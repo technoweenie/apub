@@ -452,13 +452,18 @@ func (o *Object) valueAsObject(key string, ival interface{}) (*Object, error) {
 
 		keyType, ok := ptypes[key]
 		if !ok {
-			return nil, xerrors.Errorf("valueAsObject: (%s) %s key %q: %w",
-				otype, strings.Join(o.path, "."), key, ErrKeyNotObject)
+			return o.newObj(key, map[string]interface{}{
+				"id": val,
+			}), nil
 		}
 
+		defkey := defaults[keyType]
+		if len(defkey) == 0 {
+			defkey = "id"
+		}
 		return o.newObj(key, map[string]interface{}{
-			"type":            keyType,
-			defaults[keyType]: val,
+			"type": keyType,
+			defkey: val,
 		}), nil
 	default:
 		return nil, xerrors.Errorf("valueAsObject: (%s) %s key %q: (%T) %+v: %w",
@@ -469,7 +474,7 @@ func (o *Object) valueAsObject(key string, ival interface{}) (*Object, error) {
 func (o *Object) DefaultValue() string {
 	defkey, ok := defaults[o.Type()]
 	if !ok {
-		return o.Str("id")
+		return o.ID()
 	}
 	return o.Str(defkey)
 }
