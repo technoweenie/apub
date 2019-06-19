@@ -1,6 +1,6 @@
 package apub
 
-func Recipients(o *Object) []string {
+func RecipientMap(o *Object) map[string]bool {
 	rec := make(map[string]bool)
 
 	subObj := o.Object("object")
@@ -9,7 +9,11 @@ func Recipients(o *Object) []string {
 	addRecipients(rec, subObj)
 	addRecipients(rec, subObj.Object("inReplyTo"))
 	addRecipients(rec, o.Object("inReplyTo"))
+	return rec
+}
 
+func Recipients(o *Object) []string {
+	rec := RecipientMap(o)
 	ids := make([]string, 0, len(rec))
 	for id := range rec {
 		ids = append(ids, id)
