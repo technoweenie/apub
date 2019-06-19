@@ -296,7 +296,7 @@ func TestParseIDs(t *testing.T) {
 
 	t.Run("with error", func(t *testing.T) {
 		obj := Parse(t, `{"a": 1}`)
-		obj.Set("to", []interface{}{1, "2"})
+		obj.SetList("to", []interface{}{1, "2"})
 		ids, err := obj.FetchIDs("to")
 		assert.Equal(t, []string{"2"}, ids)
 		assert.True(t, xerrors.Is(err, apub.ErrInvalidIDs), err)

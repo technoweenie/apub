@@ -396,7 +396,35 @@ func (o *Object) FetchIDs(key string) ([]string, error) {
 	}
 }
 
-func (o *Object) Set(key string, value interface{}) {
+func (o *Object) Del(key string) {
+	delete(o.data, key)
+}
+
+func (o *Object) SetBool(key string, value bool) {
+	o.data[key] = value
+}
+
+func (o *Object) SetList(key string, value []interface{}) {
+	o.data[key] = value
+}
+
+func (o *Object) SetNum(key string, value float64) {
+	o.data[key] = value
+}
+
+func (o *Object) SetObject(key string, value map[string]interface{}) error {
+	for k, v := range value {
+		switch v.(type) {
+		case bool, string, float64, []interface{}, map[string]interface{}:
+			o.data[key] = value
+		}
+		return xerrors.Errorf("SetObject: %s.%s = %+v: %w",
+			key, k, v, ErrKeyTypeNotObject)
+	}
+	return nil
+}
+
+func (o *Object) SetStr(key string, value string) {
 	o.data[key] = value
 }
 
