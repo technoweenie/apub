@@ -386,8 +386,20 @@ func (o *Object) FetchIDs(key string) ([]string, error) {
 		errs := make([]string, 0, len(val))
 		for i, id := range val {
 			if s, ok := id.(string); ok {
-				ids = append(ids, s)
+				if len(s) > 0 {
+					ids = append(ids, s)
+				}
 				continue
+			}
+
+			if m, ok := id.(map[string]interface{}); ok {
+				mID, ok := m["id"].(string)
+				if ok {
+					if len(mID) > 0 {
+						ids = append(ids, mID)
+					}
+					continue
+				}
 			}
 
 			errs = append(errs, fmt.Sprintf("%d: %T %+v", i, id, id))
@@ -408,16 +420,29 @@ func (o *Object) Del(key string) {
 	delete(o.data, key)
 }
 
-func (o *Object) SetBool(key string, value bool) {
+func (o *Object) SetBool(key string, value bool) error {
 	o.data[key] = value
+	return nil
 }
 
-func (o *Object) SetList(key string, value []interface{}) {
+func (o *Object) SetList(key string, value []interface{}) error {
 	o.data[key] = value
+	return nil
 }
 
-func (o *Object) SetNum(key string, value float64) {
+func (o *Object) AppendList(key string, values ...interface{}) error {
+	list, ok := o.data[key].([]interface{})
+	if !ok {
+		return xerrors.Errorf("AppendList: %q: %w", key, ErrInvalidList)
+	}
+
+	o.data[key] = append(list, values...)
+	return nil
+}
+
+func (o *Object) SetNum(key string, value float64) error {
 	o.data[key] = value
+	return nil
 }
 
 func (o *Object) SetObject(key string, value map[string]interface{}) error {
@@ -432,8 +457,9 @@ func (o *Object) SetObject(key string, value map[string]interface{}) error {
 	return nil
 }
 
-func (o *Object) SetStr(key string, value string) {
+func (o *Object) SetStr(key string, value string) error {
 	o.data[key] = value
+	return nil
 }
 
 func (o *Object) Errors() []error {
@@ -455,7 +481,7 @@ func (o *Object) valueAsObject(key string, ival interface{}) (*Object, error) {
 		if pt, ok := propertyTypes[otype]; ok {
 			ptypes = pt
 		} else {
-			ptypes = propertyTypes[TypeObject] // always exists
+			ptypes = propertyTypes["Object"] // always exists
 		}
 
 		keyType, ok := ptypes[key]
@@ -509,10 +535,8 @@ func (o *Object) newObj(key string, data map[string]interface{}) *Object {
 	}
 }
 
-const TypeObject = "Object"
-
 var propertyTypes = map[string]map[string]string{
-	TypeObject: map[string]string{
+	"Object": map[string]string{
 		"icon":  "Image",
 		"image": "Image",
 		"url":   "Link",

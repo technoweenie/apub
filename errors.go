@@ -15,6 +15,7 @@ var (
 	ErrInvalidIDs       = errors.New("unable to decode value as string IDs")
 	ErrInvalidInt       = errors.New("unable to decode value as int")
 	ErrInvalidTime      = errors.New("unable to decode value as time")
+	ErrInvalidList      = errors.New("unable to decode value as list")
 )
 
 func FatalLangErr(err error) bool {
