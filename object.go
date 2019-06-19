@@ -55,6 +55,14 @@ func (o *Object) Attachments() []*Object {
 	return o.List("attachment")
 }
 
+func (o *Object) AttributedTo() []string {
+	return o.IDs("attributedTo")
+}
+
+func (o *Object) Audience() []string {
+	return o.IDs("audience")
+}
+
 func (o *Object) BCC() []string {
 	return o.IDs("bcc")
 }
@@ -512,6 +520,7 @@ var propertyTypes = map[string]map[string]string{
 }
 
 var defaults = map[string]string{
-	"Image": "url",
-	"Link":  "href",
+	"Image":   "url",
+	"Link":    "href",
+	"Mention": "href",
 }
