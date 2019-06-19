@@ -279,6 +279,30 @@ func TestParseLists(t *testing.T) {
 	}
 }
 
+func TestParseIDs(t *testing.T) {
+	obj := Parse(t, `{
+		"attributedTo": "http://example.com/@bob",
+		"to": "http://example.com/@bob/followers",
+		"cc": ["http://example.com/@fred", "http://example.com/@jane"]
+	}`)
+
+	assert.Equal(t, []string{"http://example.com/@bob"}, obj.IDs("attributedTo"))
+	assert.Equal(t, []string{"http://example.com/@bob/followers"}, obj.To())
+	assert.Equal(t, []string{"http://example.com/@fred",
+		"http://example.com/@jane"}, obj.CC())
+
+	assert.Nil(t, obj.Errors())
+	assert.Nil(t, obj.NonFatalErrors())
+
+	t.Run("with error", func(t *testing.T) {
+		obj := Parse(t, `{"a": 1}`)
+		obj.Set("to", []interface{}{1, "2"})
+		ids, err := obj.FetchIDs("to")
+		assert.Equal(t, []string{"2"}, ids)
+		assert.True(t, xerrors.Is(err, apub.ErrInvalidIDs), err)
+	})
+}
+
 func Parse(t *testing.T, input string) *apub.Object {
 	dec := &apub.Parser{}
 	obj, err := dec.Parse(strings.NewReader(input))

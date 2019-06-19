@@ -51,12 +51,24 @@ func (o *Object) Type() string {
 	return o.Str("type")
 }
 
-func (o *Object) Icons() []*Object {
-	return o.List("icon")
-}
-
 func (o *Object) Attachments() []*Object {
 	return o.List("attachment")
+}
+
+func (o *Object) BCC() []string {
+	return o.IDs("bcc")
+}
+
+func (o *Object) BTo() []string {
+	return o.IDs("bto")
+}
+
+func (o *Object) CC() []string {
+	return o.IDs("cc")
+}
+
+func (o *Object) Icons() []*Object {
+	return o.List("icon")
 }
 
 func (o *Object) Images() []*Object {
@@ -65,6 +77,10 @@ func (o *Object) Images() []*Object {
 
 func (o *Object) Tags() []*Object {
 	return o.List("tag")
+}
+
+func (o *Object) To() []string {
+	return o.IDs("to")
 }
 
 func (o *Object) URLs() []*Object {
@@ -340,6 +356,48 @@ func (o *Object) FetchLang(key, lang string) (string, error) {
 	}
 
 	return val, nil
+}
+
+func (o *Object) IDs(key string) []string {
+	v, err := o.FetchIDs(key)
+	if err != nil {
+		o.addError(err)
+	}
+	return v
+}
+
+func (o *Object) FetchIDs(key string) ([]string, error) {
+	ival, ok := o.data[key]
+	if !ok {
+		return nil, nil
+	}
+
+	switch val := ival.(type) {
+	case []interface{}:
+		ids := make([]string, 0, len(val))
+		errs := make([]string, 0, len(val))
+		for i, id := range val {
+			if s, ok := id.(string); ok {
+				ids = append(ids, s)
+				continue
+			}
+
+			errs = append(errs, fmt.Sprintf("%d: %T %+v", i, id, id))
+		}
+
+		if len(errs) > 0 {
+			return ids, xerrors.Errorf("FetchIDs: %s: %w", strings.Join(errs, ", "), ErrInvalidIDs)
+		}
+		return ids, nil
+	case string:
+		return []string{val}, nil
+	default:
+		return nil, xerrors.Errorf("FetchIDs: %T %+v: %w", ival, ival, ErrInvalidIDs)
+	}
+}
+
+func (o *Object) Set(key string, value interface{}) {
+	o.data[key] = value
 }
 
 func (o *Object) Errors() []error {

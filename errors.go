@@ -13,6 +13,7 @@ var (
 	ErrKeyTypeNotObject = errors.New("unable to decode type as object")
 	ErrInvalidBool      = errors.New("unable to decode value as bool")
 	ErrInvalidFloat     = errors.New("unable to decode value as float")
+	ErrInvalidIDs       = errors.New("unable to decode value as string IDs")
 	ErrInvalidInt       = errors.New("unable to decode value as int")
 	ErrInvalidTime      = errors.New("unable to decode value as time")
 )
